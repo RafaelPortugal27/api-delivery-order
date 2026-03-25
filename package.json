@@ -1,5 +1,5 @@
 {
-  "name": "snack-api",
+  "name": "api-delivery-order",
   "version": "1.0.0",
   "description": "Multi-tenant snack order API with WhatsApp integration",
   "main": "dist/main.js",

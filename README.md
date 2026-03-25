@@ -21,20 +21,20 @@ src/
 │   │   ├── product/           # CreateProduct
 │   │   └── order/             # CreateOrder (+ WhatsApp), UpdateOrderStatus
 │   └── helpers/               # formatOrderMessage
+│       └── errors/            # AppError
 │
-├── infrastructure/            # Implementações concretas
-│   ├── database/              # Prisma client singleton
-│   ├── repositories/          # Prisma* (implementações dos contratos)
-│   ├── services/              # JWT, Twilio, EvolutionAPI, Nodemailer
-│   └── http/
-│       ├── app.ts             # Express setup
-│       ├── controllers/       # Recebem req/res, delegam aos use-cases
-│       ├── middlewares/       # Auth (JWT), TenantGuard, ErrorHandler
-│       └── routes/            # Definição das rotas
-│
-└── shared/
-    ├── errors/                # AppError
-    └── types/                 # Augmentação do Express Request
+└── infrastructure/            # Implementações concretas
+    ├── types/                 # Augmentação do Express Request
+    ├── database/              # Prisma client singleton
+    ├── repositories/          # Prisma* (implementações dos contratos)
+    ├── services/              # JWT, Twilio, EvolutionAPI, Nodemailer
+    └── http/
+        ├── app.ts             # Express setup
+        ├── controllers/       # Recebem req/res, delegam aos use-cases
+        ├── middlewares/       # Auth (JWT), TenantGuard, ErrorHandler
+        └── routes/            # Definição das rotas
+    
+    
 ```
 
 ### Princípios aplicados

@@ -19,7 +19,6 @@
       "@domain/*": ["./src/domain/*"],
       "@application/*": ["./src/application/*"],
       "@infrastructure/*": ["./src/infrastructure/*"],
-      "@shared/*": ["./src/shared/*"]
     }
   },
   "include": ["src/**/*"],
