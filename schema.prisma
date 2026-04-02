@@ -1,0 +1,200 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// CUSTOMER (consumidor final - compartilhado entre tenants)
+// ─────────────────────────────────────────────
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses Address[]
+  orders    Order[]
+  otpCodes  OtpCode[]
+
+  @@map("customers")
+}
+
+model Address {
+  id           String   @id @default(uuid())
+  customerId   String
+  label        String?  // "Casa", "Trabalho", etc.
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  zipCode      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orders   Order[]
+
+  @@map("addresses")
+}
+
+model OtpCode {
+  id         String     @id @default(uuid())
+  customerId String?
+  contact    String     // email ou telefone
+  channel    OtpChannel
+  code       String
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime   @default(now())
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@map("otp_codes")
+}
+
+enum OtpChannel {
+  EMAIL
+  WHATSAPP
+  SMS
+}
+
+// ─────────────────────────────────────────────
+// STORE (tenant)
+// ─────────────────────────────────────────────
+model Store {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  description String?
+  phone       String? // WhatsApp que recebe os pedidos
+  logoUrl     String?
+  address     String?
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      StoreUser[]
+  categories Category[]
+  products   Product[]
+  orders     Order[]
+
+  @@map("stores")
+}
+
+model StoreUser {
+  id       String        @id @default(uuid())
+  storeId  String
+  name     String
+  email    String
+  password String
+  role     StoreUserRole @default(STAFF)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([email, storeId])
+  @@map("store_users")
+}
+
+enum StoreUserRole {
+  OWNER
+  ADMIN
+  STAFF
+}
+
+// ─────────────────────────────────────────────
+// PRODUCT CATALOG
+// ─────────────────────────────────────────────
+model Category {
+  id      String @id @default(uuid())
+  storeId String
+  name    String
+  order   Int    @default(0)
+
+  createdAt DateTime @default(now())
+
+  store    Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String  @id @default(uuid())
+  storeId     String
+  categoryId  String?
+  name        String
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  imageUrl    String?
+  isAvailable Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store      Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  category   Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+// ─────────────────────────────────────────────
+// ORDER
+// ─────────────────────────────────────────────
+model Order {
+  id           String      @id @default(uuid())
+  storeId      String
+  customerId   String
+  addressId    String
+  status       OrderStatus @default(PENDING)
+  total        Decimal     @db.Decimal(10, 2)
+  notes        String?
+  whatsappSent Boolean     @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store    Store    @relation(fields: [storeId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  address  Address  @relation(fields: [addressId], references: [id])
+  items    OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  notes     String?
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  DELIVERING
+  DELIVERED
+  CANCELLED
+}
